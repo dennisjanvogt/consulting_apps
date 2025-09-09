@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.utils import timezone
 
 class Task(models.Model):
@@ -21,6 +22,7 @@ class Task(models.Model):
         ('PRIVATE', 'Private'),
     ]
     
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks', null=True)
     title = models.CharField(max_length=100)
     description = models.TextField(max_length=500, blank=True)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='MEDIUM')

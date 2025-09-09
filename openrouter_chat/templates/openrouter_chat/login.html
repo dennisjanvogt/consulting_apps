@@ -1,0 +1,33 @@
+{% extends 'openrouter_chat/base.html' %}
+{% load static %}
+
+{% block title %}Login - OpenRouter Chat{% endblock %}
+
+{% block content %}
+<div id="authContainer" class="auth-container">
+    <div class="auth-card">
+        <h1 class="auth-title">OpenRouter Chat</h1>
+        
+        <!-- Login Form -->
+        <form method="POST" class="auth-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required placeholder="Enter your username" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter your password" autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+            {% if error %}
+            <div class="auth-error">{{ error }}</div>
+            {% endif %}
+        </form>
+        
+        <div style="margin-top: 2rem; text-align: center;">
+            <a href="/" style="color: var(--text-secondary); text-decoration: none;">← Back to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -16,8 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('kanban_app.urls')),
+    path('', views.landing_page, name='landing'),
+    path('auth/', include('authentication.urls')),
+    path('kanban/', include('kanban_app.urls')),
+    path('openrouter/', include('openrouter_chat.urls')),
 ]

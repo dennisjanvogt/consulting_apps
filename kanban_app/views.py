@@ -1,14 +1,17 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
 import json
 from .models import Task
 
+@login_required
 def index(request):
     return render(request, 'kanban_app/index.html')
 
+@login_required
 def get_tasks(request, board_type):
-    tasks = Task.objects.filter(board_type=board_type.upper())
+    tasks = Task.objects.filter(user=request.user, board_type=board_type.upper())
     tasks_data = []
     for task in tasks:
         tasks_data.append({
@@ -23,10 +26,12 @@ def get_tasks(request, board_type):
         })
     return JsonResponse({'tasks': tasks_data})
 
+@login_required
 @require_http_methods(["POST"])
 def create_task(request):
     data = json.loads(request.body)
     task = Task.objects.create(
+        user=request.user,
         title=data['title'],
         description=data.get('description', ''),
         priority=data.get('priority', 'MEDIUM'),
@@ -45,9 +50,10 @@ def create_task(request):
         'position': task.position
     })
 
+@login_required
 @require_http_methods(["PUT"])
 def update_task(request, task_id):
-    task = get_object_or_404(Task, pk=task_id)
+    task = get_object_or_404(Task, pk=task_id, user=request.user)
     data = json.loads(request.body)
     
     task.title = data.get('title', task.title)
@@ -67,15 +73,17 @@ def update_task(request, task_id):
         'position': task.position
     })
 
+@login_required
 @require_http_methods(["DELETE"])
 def delete_task(request, task_id):
-    task = get_object_or_404(Task, pk=task_id)
+    task = get_object_or_404(Task, pk=task_id, user=request.user)
     task.delete()
     return JsonResponse({'success': True})
 
+@login_required
 @require_http_methods(["PATCH"])
 def move_task(request, task_id):
-    task = get_object_or_404(Task, pk=task_id)
+    task = get_object_or_404(Task, pk=task_id, user=request.user)
     data = json.loads(request.body)
     
     task.status = data['status']

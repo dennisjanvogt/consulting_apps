@@ -1,0 +1,194 @@
+{% extends 'openrouter_chat/base.html' %}
+{% load static %}
+
+{% block title %}OpenRouter Chat Interface{% endblock %}
+
+{% block content %}
+<div id="app">
+    <!-- Main Chat Interface -->
+    <div id="chatContainer" class="chat-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="user-info">
+                    <div class="user-avatar"></div>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">{{ user.username }}</span>
+                        <span class="user-email" id="userEmail">{{ user.email }}</span>
+                    </div>
+                </div>
+                <a href="/" class="btn-icon" title="Back to Home">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </a>
+            </div>
+            
+            <button class="new-chat-btn" id="newChatBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                New Chat
+            </button>
+            
+            <div class="sessions-list" id="sessionsList">
+                <!-- Sessions will be loaded here -->
+            </div>
+            
+            <div class="sidebar-footer">
+                <button class="sidebar-btn" id="settingsBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M20.46 20.46l-4.24-4.24M1.54 20.46l4.24-4.24"></path>
+                    </svg>
+                    Settings
+                </button>
+                <a href="{% url 'logout' %}" class="sidebar-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                    </svg>
+                    Logout
+                </a>
+            </div>
+        </aside>
+        
+        <!-- Chat Main Area -->
+        <main class="chat-main">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <h2 id="chatTitle">New Chat</h2>
+                    <div class="model-selector">
+                        <button class="model-btn" id="modelBtn">
+                            <span id="selectedModel">gpt-3.5-turbo</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button class="btn-icon" id="promptBtn" title="System Prompt">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </button>
+                    <button class="btn-icon" id="analyticsBtn" title="Analytics">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages will be loaded here -->
+                <div class="welcome-message" id="welcomeMessage">
+                    <h1>Welcome to OpenRouter Chat</h1>
+                    <p>Start a conversation with AI models</p>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="input-actions">
+                    <button class="btn-icon" id="attachBtn" title="Attach Image">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </button>
+                </div>
+                <textarea 
+                    id="chatInput" 
+                    class="chat-input" 
+                    placeholder="Type your message..."
+                    rows="1"
+                ></textarea>
+                <button class="send-btn" id="sendBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="modal-close" data-modal="settingsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>API Configuration</h3>
+                    <div class="form-group">
+                        <label for="apiKey">OpenRouter API Key</label>
+                        <input type="password" id="apiKey" placeholder="sk-or-..." value="{{ api_key|default:'' }}">
+                        <small>Your API key is encrypted and stored securely</small>
+                    </div>
+                    <button class="btn btn-primary" id="saveApiKey">Save API Key</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Model Selection Modal -->
+    <div class="modal" id="modelModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Select Model</h2>
+                <button class="modal-close" data-modal="modelModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="model-search" id="modelSearch" placeholder="Search models...">
+                <div class="models-grid" id="modelsGrid">
+                    <!-- Models will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Prompt Modal -->
+    <div class="modal" id="promptModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>System Prompt</h2>
+                <button class="modal-close" data-modal="promptModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="systemPrompt">System Instructions</label>
+                    <textarea id="systemPrompt" rows="10" placeholder="You are a helpful assistant..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" data-modal-close="promptModal">Cancel</button>
+                    <button class="btn btn-primary" id="savePrompt">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'openrouter_chat/js/app.js' %}"></script>
+<script src="{% static 'openrouter_chat/js/components/chat.js' %}"></script>
+<script src="{% static 'openrouter_chat/js/components/sidebar.js' %}"></script>
+<script src="{% static 'openrouter_chat/js/components/modal.js' %}"></script>
+<script src="{% static 'openrouter_chat/js/components/models.js' %}"></script>
+<script>
+    // Initialize the app
+    document.addEventListener('DOMContentLoaded', function() {
+        window.chatApp = new ChatApp();
+    });
+</script>
+{% endblock %}
