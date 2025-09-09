@@ -109,7 +109,7 @@ class KanbanApp {
 
         taskEl.innerHTML = `
             <div class="task-title">${this.escapeHtml(task.title)}</div>
-            ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
+            <div class="task-description">${task.description ? this.escapeHtml(task.description) : '<em style="opacity: 0.5;">Keine Beschreibung</em>'}</div>
             <div class="task-actions">
                 <button class="task-action-btn edit-btn" onclick="app.openTaskModal(${task.id})">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
