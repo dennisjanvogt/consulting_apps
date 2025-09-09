@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalist Kanban Board</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'kanban_app/css/style.css' %}">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1 class="logo">KANBAN</h1>
+            <div class="board-switch">
+                <button class="switch-btn active" data-board="work">Work</button>
+                <button class="switch-btn" data-board="private">Private</button>
+            </div>
+            <button class="add-task-btn" id="addTaskBtn">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </header>
+
+        <main class="kanban-board" id="kanbanBoard">
+            <div class="column" data-status="BACKLOG">
+                <h2 class="column-title">Backlog</h2>
+                <div class="tasks-container" id="backlog-tasks"></div>
+            </div>
+            <div class="column" data-status="TODO">
+                <h2 class="column-title">To-Do</h2>
+                <div class="tasks-container" id="todo-tasks"></div>
+            </div>
+            <div class="column" data-status="IN_PROGRESS">
+                <h2 class="column-title">In Progress</h2>
+                <div class="tasks-container" id="progress-tasks"></div>
+            </div>
+            <div class="column" data-status="IN_REVIEW">
+                <h2 class="column-title">In Review</h2>
+                <div class="tasks-container" id="review-tasks"></div>
+            </div>
+            <div class="column" data-status="DONE">
+                <h2 class="column-title">Done</h2>
+                <div class="tasks-container" id="done-tasks"></div>
+            </div>
+        </main>
+
+        <!-- Modal für Task erstellen/bearbeiten -->
+        <div class="modal" id="taskModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Neue Aufgabe</h2>
+                    <button class="modal-close" id="modalClose">&times;</button>
+                </div>
+                <form id="taskForm" class="task-form">
+                    <div class="form-group">
+                        <label for="taskTitle">Titel</label>
+                        <input type="text" id="taskTitle" name="title" required maxlength="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDescription">Beschreibung</label>
+                        <textarea id="taskDescription" name="description" maxlength="500" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskPriority">Priorität</label>
+                        <select id="taskPriority" name="priority">
+                            <option value="LOW">Niedrig</option>
+                            <option value="MEDIUM" selected>Mittel</option>
+                            <option value="HIGH">Hoch</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskStatus">Status</label>
+                        <select id="taskStatus" name="status">
+                            <option value="BACKLOG">Backlog</option>
+                            <option value="TODO">To-Do</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="IN_REVIEW">In Review</option>
+                            <option value="DONE">Done</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelBtn">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary">Speichern</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal für Löschen bestätigen -->
+        <div class="modal" id="deleteModal">
+            <div class="modal-content modal-small">
+                <div class="modal-header">
+                    <h2>Aufgabe löschen?</h2>
+                </div>
+                <p id="deleteMessage">Möchten Sie diese Aufgabe wirklich löschen?</p>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">Abbrechen</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Löschen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CSRF Token für Django
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+    </script>
+    <script src="{% static 'kanban_app/js/app.js' %}"></script>
+</body>
+</html>
