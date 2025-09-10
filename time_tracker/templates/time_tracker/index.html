@@ -1,0 +1,479 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tracker - Overhead</title>
+    <link rel="stylesheet" href="{% static 'time_tracker/css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Burger Menu - Always Visible -->
+    <button class="burger-menu" id="burgerMenu">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <!-- Overlay for mobile sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2 class="app-title">Time Tracker</h2>
+            </div>
+            
+            <div class="sidebar-content">
+                <!-- Timer Section -->
+                <div class="timer-section">
+                    <div class="timer-display" id="timerDisplay">00:00:00</div>
+                    <div class="timer-task" id="timerTask">No task selected</div>
+                    <div class="timer-controls">
+                        <button class="btn btn-primary btn-sm" id="startTimer">
+                            <i class="fas fa-play"></i> Start
+                        </button>
+                        <button class="btn btn-danger btn-sm" id="stopTimer" style="display: none;">
+                            <i class="fas fa-stop"></i> Stop
+                        </button>
+                    </div>
+                    <div class="timer-description-container" id="timerDescriptionContainer" style="display: none;">
+                        <textarea 
+                            id="timerLiveDescription" 
+                            class="timer-description-input" 
+                            placeholder="What are you working on?"
+                            rows="4"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="nav-section">
+                    <button class="nav-btn active" data-view="dashboard">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </button>
+                    <button class="nav-btn" data-view="timeline">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Timeline</span>
+                    </button>
+                    <button class="nav-btn" data-view="entries">
+                        <i class="fas fa-list"></i>
+                        <span>Entries</span>
+                    </button>
+                    <button class="nav-btn" data-view="clients">
+                        <i class="fas fa-users"></i>
+                        <span>Clients</span>
+                    </button>
+                    <button class="nav-btn" data-view="projects">
+                        <i class="fas fa-folder"></i>
+                        <span>Projects</span>
+                    </button>
+                    <button class="nav-btn" data-view="tasks">
+                        <i class="fas fa-tasks"></i>
+                        <span>Tasks</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-th"></i> Workspace
+                </a>
+                <a href="{% url 'auth:logout' %}" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <!-- Dashboard View -->
+            <div class="view-container active" id="dashboardView">
+                <div class="view-header">
+                    <h1>Dashboard</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="quickEntry">
+                            <i class="fas fa-plus"></i> Quick Entry
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Today</h3>
+                            <p class="stat-main" id="todayDuration">0h 0m</p>
+                            <p class="stat-secondary" id="todayRevenue">$0.00</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-week"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>This Week</h3>
+                            <p class="stat-main" id="weekDuration">0h 0m</p>
+                            <p class="stat-secondary" id="weekRevenue">$0.00</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>This Month</h3>
+                            <p class="stat-main" id="monthDuration">0h 0m</p>
+                            <p class="stat-secondary" id="monthRevenueMain">$0.00</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-folder-open"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Active Projects</h3>
+                            <p class="stat-main" id="activeProjects">0</p>
+                            <p class="stat-secondary">Projects</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Entries -->
+                <div class="recent-entries">
+                    <h2>Recent Activity</h2>
+                    <div class="entries-list" id="recentEntries">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline View -->
+            <div class="view-container" id="timelineView">
+                <div class="view-header">
+                    <h1>Timeline</h1>
+                    <div class="header-actions">
+                        <input type="date" class="date-picker" id="timelineDatePicker">
+                    </div>
+                </div>
+
+                <div class="timeline-container">
+                    <div class="timeline" id="timeline">
+                        <div class="timeline-hours">
+                            <!-- Generated by JS -->
+                        </div>
+                        <div class="timeline-tracks" id="timelineTracks">
+                            <!-- Generated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day Summary -->
+                <div class="recent-entries">
+                    <h2>Day Summary</h2>
+                    <div class="entries-list" id="daySummary">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entries View -->
+            <div class="view-container" id="entriesView">
+                <div class="view-header">
+                    <h1>Time Entries</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="newEntry">
+                            <i class="fas fa-plus"></i> New Entry
+                        </button>
+                        <div class="filter-group">
+                            <select id="filterClient" class="filter-select">
+                                <option value="">All Clients</option>
+                            </select>
+                            <select id="filterProject" class="filter-select">
+                                <option value="">All Projects</option>
+                            </select>
+                            <input type="date" id="filterDateFrom" class="filter-date">
+                            <input type="date" id="filterDateTo" class="filter-date">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="entries-table-container">
+                    <table class="entries-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Client</th>
+                                <th>Project</th>
+                                <th>Task</th>
+                                <th>Description</th>
+                                <th>Duration</th>
+                                <th>Revenue</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="entriesTableBody">
+                            <!-- Generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Clients View -->
+            <div class="view-container" id="clientsView">
+                <div class="view-header">
+                    <h1>Clients</h1>
+                    <button class="btn btn-primary" id="newClient">
+                        <i class="fas fa-plus"></i> New Client
+                    </button>
+                </div>
+
+                <div class="cards-grid" id="clientsGrid">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <!-- Projects View -->
+            <div class="view-container" id="projectsView">
+                <div class="view-header">
+                    <h1>Projects</h1>
+                    <button class="btn btn-primary" id="newProject">
+                        <i class="fas fa-plus"></i> New Project
+                    </button>
+                </div>
+
+                <div class="cards-grid" id="projectsGrid">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <!-- Tasks View -->
+            <div class="view-container" id="tasksView">
+                <div class="view-header">
+                    <h1>Tasks</h1>
+                    <button class="btn btn-primary" id="newTask">
+                        <i class="fas fa-plus"></i> New Task
+                    </button>
+                </div>
+
+                <div class="cards-grid" id="tasksGrid">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Timer Start Modal -->
+    <div class="modal" id="timerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Start Timer</h2>
+                <button class="modal-close" data-modal="timerModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Select Task</label>
+                    <select id="timerTaskSelect" class="form-control" required>
+                        <option value="">Choose a task...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description (Optional)</label>
+                    <textarea id="timerDescription" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal="timerModal">Cancel</button>
+                <button class="btn btn-primary" id="confirmStartTimer">Start Timer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Modal -->
+    <div class="modal" id="clientModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="clientModalTitle">New Client</h2>
+                <button class="modal-close" data-modal="clientModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="clientName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Company</label>
+                    <input type="text" id="clientCompany" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="clientEmail" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="clientPhone" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <textarea id="clientAddress" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Hourly Rate</label>
+                    <input type="number" id="clientHourlyRate" class="form-control" step="0.01" value="100.00">
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="color" id="clientColor" class="form-control" value="#1E3A5F">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal="clientModal">Cancel</button>
+                <button class="btn btn-primary" id="saveClient">Save Client</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Modal -->
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="projectModalTitle">New Project</h2>
+                <button class="modal-close" data-modal="projectModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Client *</label>
+                    <select id="projectClient" class="form-control" required>
+                        <option value="">Select a client...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Project Name *</label>
+                    <input type="text" id="projectName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="projectDescription" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Hourly Rate (leave empty for client rate)</label>
+                    <input type="number" id="projectHourlyRate" class="form-control" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Daily Rate</label>
+                    <input type="number" id="projectDailyRate" class="form-control" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Budget Hours</label>
+                    <input type="number" id="projectBudgetHours" class="form-control" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="projectStatus" class="form-control">
+                        <option value="active">Active</option>
+                        <option value="paused">Paused</option>
+                        <option value="completed">Completed</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="color" id="projectColor" class="form-control" value="#2E4A7F">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal="projectModal">Cancel</button>
+                <button class="btn btn-primary" id="saveProject">Save Project</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="taskModalTitle">New Task</h2>
+                <button class="modal-close" data-modal="taskModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Project *</label>
+                    <select id="taskProject" class="form-control" required>
+                        <option value="">Select a project...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Task Name *</label>
+                    <input type="text" id="taskName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="taskDescription" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Estimated Hours</label>
+                    <input type="number" id="taskEstimatedHours" class="form-control" step="0.01">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal="taskModal">Cancel</button>
+                <button class="btn btn-primary" id="saveTask">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Entry Modal -->
+    <div class="modal" id="entryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="entryModalTitle">New Time Entry</h2>
+                <button class="modal-close" data-modal="entryModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Task *</label>
+                    <select id="entryTask" class="form-control" required>
+                        <option value="">Select a task...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" id="entryDate" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Start Time *</label>
+                    <input type="time" id="entryStartTime" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>End Time *</label>
+                    <input type="time" id="entryEndTime" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="entryDescription" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="entryBillable" checked>
+                        Billable
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal="entryModal">Cancel</button>
+                <button class="btn btn-primary" id="saveEntry">Save Entry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSRF Token -->
+    {% csrf_token %}
+    
+    <script src="{% static 'time_tracker/js/app.js' %}"></script>
+</body>
+</html>

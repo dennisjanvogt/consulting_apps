@@ -1,38 +1,45 @@
-{% extends 'openrouter_chat/base.html' %}
 {% load static %}
-
-{% block title %}OpenRouter Chat Interface{% endblock %}
-
-{% block content %}
-<div id="app">
-    <!-- Main Chat Interface -->
-    <div id="chatContainer" class="chat-container">
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenRouter Chat</title>
+    <link rel="stylesheet" href="{% static 'openrouter_chat/css/style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
+            <!-- Burger Toggle Button -->
+            <button class="sidebar-toggle" id="sidebarToggleNew">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            
             <div class="sidebar-header">
                 <div class="user-info">
-                    <div class="user-avatar"></div>
                     <div class="user-details">
-                        <span class="user-name" id="userName">{{ user.username }}</span>
-                        <span class="user-email" id="userEmail">{{ user.email }}</span>
+                        <span class="user-name">{{ user.username }}</span>
+                        <span class="user-email">{{ user.email }}</span>
                     </div>
                 </div>
-                <a href="/" class="btn-icon" title="Back to Home">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 12H5M12 19l-7-7 7-7"/>
-                    </svg>
-                </a>
             </div>
             
             <button class="new-chat-btn" id="newChatBtn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 5v14M5 12h14"/>
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
-                New Chat
+                Neuer Chat
             </button>
             
             <div class="sessions-list" id="sessionsList">
-                <!-- Sessions will be loaded here -->
+                <!-- Sessions werden hier dynamisch geladen -->
             </div>
             
             <div class="sidebar-footer">
@@ -41,62 +48,63 @@
                         <circle cx="12" cy="12" r="3"></circle>
                         <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M20.46 20.46l-4.24-4.24M1.54 20.46l4.24-4.24"></path>
                     </svg>
-                    Settings
+                    Einstellungen
                 </button>
-                <a href="{% url 'logout' %}" class="sidebar-btn">
+                <a href="{% url 'auth:logout' %}" class="sidebar-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
                     </svg>
                     Logout
                 </a>
             </div>
         </aside>
         
-        <!-- Chat Main Area -->
+        <!-- Main Chat Area -->
         <main class="chat-main">
-            <div class="chat-header">
-                <div class="chat-header-info">
-                    <h2 id="chatTitle">New Chat</h2>
-                    <div class="model-selector">
-                        <button class="model-btn" id="modelBtn">
-                            <span id="selectedModel">gpt-3.5-turbo</span>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M6 9l6 6 6-6"/>
-                            </svg>
-                        </button>
-                    </div>
+            <!-- Chat Header -->
+            <header class="chat-header">
+                <a href="/" class="btn-icon home-btn" title="Zurück zum Workspace Hub">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                </a>
+                
+                <button class="btn-icon" id="sidebarToggle" title="Sidebar umschalten">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                
+                <div class="model-selector">
+                    <button id="modelSelectBtn" class="model-select-btn">
+                        <span id="selectedModelName">GPT-3.5 Turbo</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
                 </div>
-                <div class="chat-header-actions">
+                
+                <div class="header-actions">
                     <button class="btn-icon" id="promptBtn" title="System Prompt">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                             <line x1="16" y1="13" x2="8" y2="13"></line>
                             <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
                         </svg>
                     </button>
-                    <button class="btn-icon" id="analyticsBtn" title="Analytics">
+                    <button class="btn-icon" id="clearChatBtn" title="Chat löschen">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="20" x2="18" y2="10"></line>
-                            <line x1="12" y1="20" x2="12" y2="4"></line>
-                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         </svg>
                     </button>
-                </div>
-            </div>
-            
-            <div class="chat-messages" id="chatMessages">
-                <!-- Messages will be loaded here -->
-                <div class="welcome-message" id="welcomeMessage">
-                    <h1>Welcome to OpenRouter Chat</h1>
-                    <p>Start a conversation with AI models</p>
-                </div>
-            </div>
-            
-            <div class="chat-input-container">
-                <div class="input-actions">
-                    <button class="btn-icon" id="attachBtn" title="Attach Image">
+                    <button class="btn-icon" id="exportChatBtn" title="Chat exportieren">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
@@ -104,52 +112,59 @@
                         </svg>
                     </button>
                 </div>
-                <textarea 
-                    id="chatInput" 
-                    class="chat-input" 
-                    placeholder="Type your message..."
-                    rows="1"
-                ></textarea>
-                <button class="send-btn" id="sendBtn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                    </svg>
-                </button>
-            </div>
-        </main>
-    </div>
-    
-    <!-- Settings Modal -->
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Settings</h2>
-                <button class="modal-close" data-modal="settingsModal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-section">
-                    <h3>API Configuration</h3>
-                    <div class="form-group">
-                        <label for="apiKey">OpenRouter API Key</label>
-                        <input type="password" id="apiKey" placeholder="sk-or-..." value="{{ api_key|default:'' }}">
-                        <small>Your API key is encrypted and stored securely</small>
+            </header>
+            
+            <!-- Messages Container -->
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-message">
+                    <h1>Willkommen beim OpenRouter Chat</h1>
+                    <p>Um zu beginnen, benötigst du einen OpenRouter API Key:</p>
+                    <div style="text-align: left; max-width: 500px; margin: 20px auto; padding: 20px; background: rgba(59, 130, 246, 0.1); border-radius: 8px;">
+                        <ol style="margin: 0; padding-left: 20px;">
+                            <li>Registriere dich auf <a href="https://openrouter.ai" target="_blank" style="color: #3b82f6;">openrouter.ai</a></li>
+                            <li>Erstelle einen API Key in den Account-Einstellungen</li>
+                            <li>Füge Credits hinzu (min. $5)</li>
+                            <li>Klicke auf Einstellungen und füge deinen API Key ein</li>
+                        </ol>
                     </div>
-                    <button class="btn btn-primary" id="saveApiKey">Save API Key</button>
+                    <p>Danach kannst du aus über 100+ AI-Modellen wählen!</p>
                 </div>
             </div>
-        </div>
+            
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        class="message-input" 
+                        placeholder="Nachricht eingeben..."
+                        rows="1"
+                    ></textarea>
+                    <button class="send-btn" id="sendBtn" disabled>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+                <div class="input-info">
+                    <span id="charCount">0</span> Zeichen
+                </div>
+            </div>
+        </main>
     </div>
     
     <!-- Model Selection Modal -->
     <div class="modal" id="modelModal">
         <div class="modal-content modal-large">
             <div class="modal-header">
-                <h2>Select Model</h2>
-                <button class="modal-close" data-modal="modelModal">&times;</button>
+                <h2>Modell auswählen</h2>
+                <button class="modal-close" data-modal="model">&times;</button>
             </div>
             <div class="modal-body">
-                <input type="text" class="model-search" id="modelSearch" placeholder="Search models...">
+                <div class="model-search">
+                    <input type="text" id="modelSearch" class="form-input" placeholder="Modell suchen...">
+                </div>
                 <div class="models-grid" id="modelsGrid">
                     <!-- Models will be loaded here -->
                 </div>
@@ -162,33 +177,95 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>System Prompt</h2>
-                <button class="modal-close" data-modal="promptModal">&times;</button>
+                <button class="modal-close" data-modal="prompt">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="systemPrompt">System Instructions</label>
-                    <textarea id="systemPrompt" rows="10" placeholder="You are a helpful assistant..."></textarea>
+                    <label for="systemPrompt">System Anweisungen</label>
+                    <textarea 
+                        id="systemPrompt" 
+                        class="form-textarea" 
+                        rows="10" 
+                        placeholder="Du bist ein hilfreicher Assistent..."
+                    ></textarea>
+                    <small>Definiere das Verhalten und die Persönlichkeit des AI-Modells</small>
+                </div>
+                <div class="prompt-templates">
+                    <h4>Vorlagen:</h4>
+                    <div class="template-buttons">
+                        <button class="template-btn" data-template="helpful">Hilfreicher Assistent</button>
+                        <button class="template-btn" data-template="creative">Kreativ</button>
+                        <button class="template-btn" data-template="technical">Technisch</button>
+                        <button class="template-btn" data-template="concise">Präzise</button>
+                    </div>
                 </div>
                 <div class="modal-actions">
-                    <button class="btn btn-secondary" data-modal-close="promptModal">Cancel</button>
-                    <button class="btn btn-primary" id="savePrompt">Save</button>
+                    <button class="btn-secondary" id="resetPrompt">Zurücksetzen</button>
+                    <button class="btn-primary" id="savePrompt">Speichern</button>
                 </div>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'openrouter_chat/js/app.js' %}"></script>
-<script src="{% static 'openrouter_chat/js/components/chat.js' %}"></script>
-<script src="{% static 'openrouter_chat/js/components/sidebar.js' %}"></script>
-<script src="{% static 'openrouter_chat/js/components/modal.js' %}"></script>
-<script src="{% static 'openrouter_chat/js/components/models.js' %}"></script>
-<script>
-    // Initialize the app
-    document.addEventListener('DOMContentLoaded', function() {
-        window.chatApp = new ChatApp();
-    });
-</script>
-{% endblock %}
+    
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Einstellungen</h2>
+                <button class="modal-close" data-modal="settings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form autocomplete="off">
+                    <!-- Hidden username field for accessibility -->
+                    <input type="text" name="username" style="display:none" aria-hidden="true" autocomplete="username" value="api">
+                    <div class="form-group">
+                        <label for="apiKey">OpenRouter API Key</label>
+                        <input 
+                            type="password" 
+                            id="apiKey" 
+                            name="password"
+                            class="form-input" 
+                            placeholder="sk-or-..."
+                            value="{{ api_key|default:'' }}"
+                            autocomplete="new-password"
+                        >
+                        <small>
+                            <strong>Wichtig:</strong> Du benötigst deinen eigenen API Key von OpenRouter.<br>
+                            1. Registriere dich kostenlos auf <a href="https://openrouter.ai" target="_blank" style="color: #3b82f6;">openrouter.ai</a><br>
+                            2. Gehe zu deinen Account-Einstellungen → API Keys<br>
+                            3. Erstelle einen neuen API Key und kopiere ihn hierher<br>
+                            4. Füge Credits zu deinem Account hinzu (Mindestbetrag: $5)
+                        </small>
+                    </div>
+                    <button type="button" class="btn-primary" id="saveApiKey">API Key speichern</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <script>
+        // Django CSRF Token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+    </script>
+    <script src="{% static 'openrouter_chat/js/app.js' %}"></script>
+</body>
+</html>

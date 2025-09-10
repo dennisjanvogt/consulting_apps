@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #0A0A0B;
+            --bg-secondary: #131316;
+            --bg-card: #1A1A1D;
+            --accent-kanban: #1E3A5F;
+            --accent-chat: #2E3F8F;
+            --accent-storage: #1F4C3A;
+            --accent-tracker: #1E3A5F;
+            --accent-app5: #3F1E5F;
+            --accent-app6: #5F1E3A;
+            --text-primary: #E4E4E7;
+            --text-secondary: #A1A1AA;
+            --border: rgba(255, 255, 255, 0.1);
+            --glow-kanban: rgba(30, 58, 95, 0.5);
+            --glow-chat: rgba(46, 63, 143, 0.5);
+            --glow-storage: rgba(31, 76, 58, 0.5);
+            --glow-tracker: rgba(30, 58, 95, 0.5);
+            --glow-app5: rgba(63, 30, 95, 0.5);
+            --glow-app6: rgba(95, 30, 58, 0.5);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 80%, var(--glow-kanban) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, var(--glow-chat) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, var(--glow-kanban) 0%, transparent 50%);
+            animation: rotate 20s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            padding: 1rem;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            flex-shrink: 0;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 3px;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-chat));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 3s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+        
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(200px, 280px));
+            gap: 1.5rem;
+            flex: 1;
+            overflow: hidden;
+            justify-content: center;
+            align-content: center;
+        }
+        
+        .app-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+        }
+        
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, transparent, var(--accent-color), transparent);
+            border-radius: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+        
+        .app-card.kanban::before {
+            --accent-color: var(--accent-kanban);
+        }
+        
+        .app-card.chat::before {
+            --accent-color: var(--accent-chat);
+        }
+        
+        .app-card.storage::before {
+            --accent-color: var(--accent-storage);
+        }
+        
+        .app-card.tracker::before {
+            --accent-color: var(--accent-tracker);
+        }
+        
+        .app-card.app5::before {
+            --accent-color: var(--accent-app5);
+        }
+        
+        .app-card.app6::before {
+            --accent-color: var(--accent-app6);
+        }
+        
+        .app-card:hover {
+            transform: translateY(-5px);
+            border-color: transparent;
+        }
+        
+        .app-card:hover::before {
+            opacity: 1;
+        }
+        
+        .app-card.kanban:hover {
+            box-shadow: 0 10px 30px var(--glow-kanban);
+        }
+        
+        .app-card.chat:hover {
+            box-shadow: 0 10px 30px var(--glow-chat);
+        }
+        
+        .app-card.storage:hover {
+            box-shadow: 0 10px 30px var(--glow-storage);
+        }
+        
+        .app-card.tracker:hover {
+            box-shadow: 0 10px 30px var(--glow-tracker);
+        }
+        
+        .app-card.app5:hover {
+            box-shadow: 0 10px 30px var(--glow-app5);
+        }
+        
+        .app-card.app6:hover {
+            box-shadow: 0 10px 30px var(--glow-app6);
+        }
+        
+        .app-icon {
+            width: 70px;
+            height: 70px;
+            margin-bottom: 1rem;
+            padding: 1.25rem;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .app-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .app-card.kanban .app-icon {
+            background: linear-gradient(135deg, var(--accent-kanban), rgba(30, 58, 95, 0.3));
+        }
+        
+        .app-card.chat .app-icon {
+            background: linear-gradient(135deg, var(--accent-chat), rgba(46, 63, 143, 0.3));
+        }
+        
+        .app-card.storage .app-icon {
+            background: linear-gradient(135deg, var(--accent-storage), rgba(31, 76, 58, 0.3));
+        }
+        
+        .app-card.tracker .app-icon {
+            background: linear-gradient(135deg, var(--accent-tracker), rgba(30, 58, 95, 0.3));
+        }
+        
+        .app-card.app5 .app-icon {
+            background: linear-gradient(135deg, var(--accent-app5), rgba(63, 30, 95, 0.3));
+        }
+        
+        .app-card.app6 .app-icon {
+            background: linear-gradient(135deg, var(--accent-app6), rgba(95, 30, 58, 0.3));
+        }
+        
+        .app-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .app-description {
+            color: var(--text-secondary);
+            line-height: 1.4;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .app-features {
+            list-style: none;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        
+        .app-features li {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .app-features li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+        }
+        
+        .app-card.kanban .app-features li::before {
+            color: var(--accent-kanban);
+        }
+        
+        .app-card.chat .app-features li::before {
+            color: var(--accent-chat);
+        }
+        
+        .app-card.storage .app-features li::before {
+            color: var(--accent-storage);
+        }
+        
+        .app-card.tracker .app-features li::before {
+            color: var(--accent-tracker);
+        }
+        
+        .app-card.app5 .app-features li::before {
+            color: var(--accent-app5);
+        }
+        
+        .app-card.app6 .app-features li::before {
+            color: var(--accent-app6);
+        }
+        
+        
+        
+        @media (max-width: 1200px) {
+            .apps-grid {
+                grid-template-columns: repeat(2, minmax(200px, 280px));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .title {
+                font-size: 1.75rem;
+            }
+            
+            .apps-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .app-card {
+                padding: 1rem;
+            }
+        }
+        
+        .auth-status {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .auth-status .username {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .auth-status a {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .auth-status a:hover {
+            background: var(--accent-chat);
+            border-color: var(--accent-chat);
+            box-shadow: 0 4px 12px var(--glow-chat);
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-status">
+        {% if is_authenticated %}
+            <span class="username">Welcome, {{ user.username }}</span>
+            <a href="/auth/logout/">Logout</a>
+        {% else %}
+            <a href="/auth/login/">Login</a>
+            <a href="/auth/register/">Register</a>
+        {% endif %}
+    </div>
+    
+    <div class="container">
+        <header class="header">
+            <h1 class="title">WORKSPACE HUB</h1>
+            <p class="subtitle">Choose your productivity tool</p>
+        </header>
+        
+        <div class="apps-grid">
+            <!-- Kanban Board Card -->
+            <a href="/kanban/" class="app-card kanban">
+                <div class="app-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="9" y1="3" x2="9" y2="21"></line>
+                        <line x1="15" y1="3" x2="15" y2="21"></line>
+                    </svg>
+                </div>
+                <h2 class="app-title">Kanban Board</h2>
+                <p class="app-description">
+                    Visual task management with drag & drop boards.
+                </p>
+                <ul class="app-features">
+                    <li>5 customizable columns</li>
+                    <li>Drag & drop functionality</li>
+                    <li>Work/Private board switch</li>
+                    <li>Priority indicators</li>
+                </ul>
+            </a>
+            
+            <!-- OpenRouter Chat Card -->
+            <a href="/openrouter/" class="app-card chat">
+                <div class="app-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        <circle cx="9" cy="10" r="1" fill="currentColor"></circle>
+                        <circle cx="12" cy="10" r="1" fill="currentColor"></circle>
+                        <circle cx="15" cy="10" r="1" fill="currentColor"></circle>
+                    </svg>
+                </div>
+                <h2 class="app-title">OpenRouter Chat</h2>
+                <p class="app-description">
+                    AI-powered chat with multiple language models.
+                </p>
+                <ul class="app-features">
+                    <li>Multiple AI models</li>
+                    <li>Real-time streaming</li>
+                    <li>System prompts library</li>
+                    <li>Token & cost tracking</li>
+                </ul>
+            </a>
+            
+            <!-- Storage Card -->
+            <a href="/storage/" class="app-card storage">
+                <div class="app-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 10v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6l2-3h8a2 2 0 0 1 2 2v5z"></path>
+                        <line x1="12" y1="11" x2="12" y2="17"></line>
+                        <line x1="9" y1="14" x2="15" y2="14"></line>
+                    </svg>
+                </div>
+                <h2 class="app-title">Storage</h2>
+                <p class="app-description">
+                    Cloud storage with drag & drop file management.
+                </p>
+                <ul class="app-features">
+                    <li>Drag & drop upload</li>
+                    <li>Folder organization</li>
+                    <li>File preview</li>
+                    <li>Quick search</li>
+                </ul>
+            </a>
+            
+            <!-- Time Tracker Card -->
+            <a href="/time-tracker/" class="app-card tracker">
+                <div class="app-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <h2 class="app-title">Time Tracker</h2>
+                <p class="app-description">
+                    Track billable hours and manage client projects.
+                </p>
+                <ul class="app-features">
+                    <li>Real-time timer</li>
+                    <li>Client & project management</li>
+                    <li>Timeline visualization</li>
+                    <li>Revenue tracking</li>
+                </ul>
+            </a>
+            
+            <!-- App 5 Placeholder -->
+            <div class="app-card app5" style="opacity: 0.5; cursor: not-allowed; pointer-events: none;">
+                <div class="app-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
+                        <line x1="7" y1="10" x2="17" y2="10"></line>
+                        <line x1="7" y1="14" x2="17" y2="14"></line>
+                    </svg>
+                </div>
+                <h2 class="app-title">Notes & Docs</h2>
+                <p class="app-description">
+                    Coming soon: Markdown notes with real-time sync.
+                </p>
+                <ul class="app-features">
+                    <li>Markdown editor</li>
+                    <li>Real-time sync</li>
+                    <li>Code highlighting</li>
+                    <li>Export options</li>
+                </ul>
+            </div>
+            
+            <!-- App 6 Placeholder -->
+            <div class="app-card app6" style="opacity: 0.5; cursor: not-allowed; pointer-events: none;">
+                <div class="app-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <h2 class="app-title">Invoice Manager</h2>
+                <p class="app-description">
+                    Coming soon: Integrated invoicing and billing.
+                </p>
+                <ul class="app-features">
+                    <li>PDF generation</li>
+                    <li>Template library</li>
+                    <li>Payment tracking</li>
+                    <li>Tax calculations</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
