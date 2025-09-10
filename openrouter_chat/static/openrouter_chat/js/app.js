@@ -13,6 +13,12 @@ class ChatApp {
         this.systemPrompt = '';
         this.apiKey = '';
         this.isLoading = false;
+        this.attachments = [];
+        this.activeFilters = {
+            providers: [],
+            cost: [],
+            features: []
+        };
         
         this.promptTemplates = {
             helpful: 'Du bist ein hilfreicher und freundlicher Assistent. Beantworte Fragen präzise und verständlich.',
@@ -44,6 +50,7 @@ class ChatApp {
         this.setupEventListeners();
         await this.loadModels();
         await this.loadSessions();
+        // Don't load stats automatically anymore
         this.loadSystemPrompt();
         this.checkApiKey();
     }
@@ -74,6 +81,11 @@ class ChatApp {
         // Settings
         document.getElementById('settingsBtn').addEventListener('click', () => {
             this.showModal('settings');
+        });
+        
+        // Stats button
+        document.getElementById('statsBtn').addEventListener('click', () => {
+            this.toggleStats();
         });
         
         // Save API Key
@@ -131,6 +143,57 @@ class ChatApp {
             });
         }
         
+        // Filter toggles
+        document.querySelectorAll('.filter-toggle').forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.target.classList.toggle('active');
+                this.updateFilters();
+            });
+        });
+        
+        // Clear filters button
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-toggle').forEach(toggle => {
+                    toggle.classList.remove('active');
+                });
+                this.updateFilters();
+            });
+        }
+        
+        // Image upload (gated by model capability)
+        const imageUploadBtn = document.getElementById('imageUploadBtn');
+        const imageInput = document.getElementById('imageInput');
+        if (imageUploadBtn && imageInput) {
+            imageUploadBtn.addEventListener('click', () => {
+                if (!this.modelSupports('vision')) {
+                    this.showError('Das ausgewählte Modell unterstützt keine Bilder.');
+                    return;
+                }
+                imageInput.click();
+            });
+            imageInput.addEventListener('change', (e) => {
+                this.handleFileUpload(e.target.files, 'image');
+            });
+        }
+        
+        // Audio upload (gated by model capability)
+        const audioUploadBtn = document.getElementById('audioUploadBtn');
+        const audioInput = document.getElementById('audioInput');
+        if (audioUploadBtn && audioInput) {
+            audioUploadBtn.addEventListener('click', () => {
+                if (!this.modelSupports('audio')) {
+                    this.showError('Das ausgewählte Modell unterstützt kein Audio.');
+                    return;
+                }
+                audioInput.click();
+            });
+            audioInput.addEventListener('change', (e) => {
+                this.handleFileUpload(e.target.files, 'audio');
+            });
+        }
+        
         // Message input
         this.elements.messageInput.addEventListener('input', (e) => {
             this.handleInputChange(e);
@@ -170,6 +233,8 @@ class ChatApp {
             this.selectedModel = savedModel;
             this.updateSelectedModelDisplay();
         }
+        // Update media buttons based on current model
+        this.updateMediaButtonsVisibility();
     }
     
     async loadModels() {
@@ -182,31 +247,45 @@ class ChatApp {
         }
     }
     
-    renderModels() {
+    renderModels(modelsToRender = null) {
         const grid = document.getElementById('modelsGrid');
         if (!grid) return;
         
-        grid.innerHTML = this.availableModels.map(model => {
+        const models = modelsToRender || this.availableModels;
+        
+        if (models.length === 0) {
+            grid.innerHTML = '<div class="no-models">Keine Modelle gefunden</div>';
+            return;
+        }
+        
+        grid.innerHTML = models.map(model => {
             const isSelected = model.id === this.selectedModel;
             const capabilities = model.capabilities || [];
             return `
                 <div class="model-card ${isSelected ? 'selected' : ''}" data-model-id="${model.id}">
-                    <div class="model-name">${this.escapeHtml(model.name)}</div>
+                    <div class="model-header">
+                        <div class="model-name">${this.escapeHtml(model.name)}</div>
+                        
+                    </div>
                     <div class="model-provider">${this.escapeHtml(model.provider)}</div>
                     <div class="model-features">
                         <span class="model-badge">Context: ${model.context.toLocaleString()}</span>
-                        ${capabilities.includes('vision') ? '<span class="model-badge">👁️ Vision</span>' : ''}
+                        ${capabilities.includes('vision') ? '<span class="model-badge">🖼️ Vision</span>' : ''}
+                        ${capabilities.includes('audio') ? '<span class="model-badge">🎵 Audio</span>' : ''}
                         ${capabilities.includes('code') ? '<span class="model-badge">💻 Code</span>' : ''}
                     </div>
                     <div class="model-pricing">
-                        <div class="price-item">
-                            <span class="price-label">Input</span>
-                            <span class="price-value">$${model.pricing.prompt.toFixed(3)}/1M</span>
-                        </div>
-                        <div class="price-item">
-                            <span class="price-label">Output</span>
-                            <span class="price-value">$${model.pricing.completion.toFixed(3)}/1M</span>
-                        </div>
+                        ${model.is_free ? 
+                            '<div class="free-pricing">Kostenlos</div>' : 
+                            `<div class="price-item">
+                                <span class="price-label">Input</span>
+                                <span class="price-value">$${model.pricing.prompt.toFixed(3)}/1M</span>
+                            </div>
+                            <div class="price-item">
+                                <span class="price-label">Output</span>
+                                <span class="price-value">$${model.pricing.completion.toFixed(3)}/1M</span>
+                            </div>`
+                        }
                     </div>
                 </div>
             `;
@@ -231,6 +310,7 @@ class ChatApp {
         });
         
         this.updateSelectedModelDisplay();
+        this.updateMediaButtonsVisibility();
         this.closeModal('model');
     }
     
@@ -240,14 +320,98 @@ class ChatApp {
             this.elements.selectedModelName.textContent = model.name;
         }
     }
+
+    modelSupports(feature) {
+        const model = this.availableModels.find(m => m.id === this.selectedModel);
+        return !!(model && model.capabilities && model.capabilities.includes(feature));
+    }
+
+    updateMediaButtonsVisibility() {
+        const imageBtn = document.getElementById('imageUploadBtn');
+        const audioBtn = document.getElementById('audioUploadBtn');
+        if (imageBtn) {
+            const supportsVision = this.modelSupports('vision');
+            imageBtn.disabled = !supportsVision;
+            imageBtn.title = supportsVision ? 'Bild hochladen' : 'Modell unterstützt keine Bilder';
+        }
+        if (audioBtn) {
+            const supportsAudio = this.modelSupports('audio');
+            audioBtn.disabled = !supportsAudio;
+            audioBtn.title = supportsAudio ? 'Audio hochladen' : 'Modell unterstützt kein Audio';
+        }
+    }
     
     filterModels(searchTerm) {
-        const cards = document.querySelectorAll('.model-card');
-        cards.forEach(card => {
-            const text = card.textContent.toLowerCase();
-            const match = text.includes(searchTerm.toLowerCase());
-            card.style.display = match ? '' : 'none';
+        let filtered = this.getFilteredModels();
+        
+        if (searchTerm) {
+            const search = searchTerm.toLowerCase();
+            filtered = filtered.filter(model => {
+                return model.name.toLowerCase().includes(search) || 
+                       model.provider.toLowerCase().includes(search) ||
+                       model.id.toLowerCase().includes(search);
+            });
+        }
+        
+        this.renderModels(filtered);
+    }
+    
+    updateFilters() {
+        // Get active filters
+        this.activeFilters = {
+            providers: [],
+            cost: [],
+            features: []
+        };
+        
+        document.querySelectorAll('.provider-filters .filter-toggle.active').forEach(toggle => {
+            this.activeFilters.providers.push(toggle.dataset.provider);
         });
+        
+        document.querySelectorAll('.cost-filters .filter-toggle.active').forEach(toggle => {
+            this.activeFilters.cost.push(toggle.dataset.cost);
+        });
+        
+        document.querySelectorAll('.feature-filters .filter-toggle.active').forEach(toggle => {
+            this.activeFilters.features.push(toggle.dataset.feature);
+        });
+        
+        // Apply filters
+        const searchTerm = document.getElementById('modelSearch')?.value || '';
+        this.filterModels(searchTerm);
+    }
+    
+    getFilteredModels() {
+        let filtered = [...this.availableModels];
+        
+        // Provider filter
+        if (this.activeFilters.providers.length > 0) {
+            filtered = filtered.filter(model => {
+                const modelProvider = model.provider.toLowerCase();
+                return this.activeFilters.providers.some(provider => 
+                    modelProvider.includes(provider.toLowerCase())
+                );
+            });
+        }
+        
+        // Cost filter
+        if (this.activeFilters.cost.includes('free')) {
+            filtered = filtered.filter(model => model.is_free);
+        }
+        if (this.activeFilters.cost.includes('cheap')) {
+            filtered = filtered.filter(model => 
+                !model.is_free && model.pricing.prompt < 1 && model.pricing.completion < 2
+            );
+        }
+        
+        // Feature filter
+        this.activeFilters.features.forEach(feature => {
+            filtered = filtered.filter(model => 
+                model.capabilities && model.capabilities.includes(feature)
+            );
+        });
+        
+        return filtered;
     }
     
     loadSystemPrompt() {
@@ -295,8 +459,9 @@ class ChatApp {
         const charCount = e.target.value.length;
         this.elements.charCount.textContent = charCount;
         
-        // Enable/disable send button
-        this.elements.sendBtn.disabled = charCount === 0 || this.isLoading;
+        // Enable/disable send button (allow attachments-only)
+        const hasAttachments = this.attachments.length > 0;
+        this.elements.sendBtn.disabled = (charCount === 0 && !hasAttachments) || this.isLoading;
     }
     
     async loadSessions() {
@@ -328,7 +493,10 @@ class ChatApp {
             <div class="session-item ${session.id === this.currentSession ? 'active' : ''}" 
                  data-session-id="${session.id}">
                 <div class="session-title">${this.escapeHtml(session.title)}</div>
-                <div class="session-time">${this.formatTime(session.updated_at)}</div>
+                <div class="session-meta">
+                    <span class="session-time">${this.formatTime(session.updated_at)}</span>
+                    ${session.total_cost > 0 ? `<span class="session-cost">${this.formatCostDisplay(session.total_cost)}</span>` : ''}
+                </div>
             </div>
         `).join('');
         
@@ -353,6 +521,16 @@ class ChatApp {
             // Load messages
             const response = await this.apiRequest(`/api/sessions/${sessionId}/messages/`);
             this.messages = response.messages || [];
+            
+            // Update session cost if available
+            if (response.total_cost !== undefined) {
+                const session = this.sessions.find(s => s.id === sessionId);
+                if (session) {
+                    session.total_cost = response.total_cost;
+                    this.renderSessions();
+                }
+            }
+            
             this.renderMessages();
         } catch (error) {
             console.error('Failed to load session:', error);
@@ -417,7 +595,8 @@ class ChatApp {
     
     async sendMessage() {
         const message = this.elements.messageInput.value.trim();
-        if (!message || this.isLoading) return;
+        const hasAttachments = this.attachments.length > 0;
+        if ((!message && !hasAttachments) || this.isLoading) return;
         
         // Check for API key
         if (!this.apiKey) {
@@ -433,7 +612,7 @@ class ChatApp {
         // Add user message to UI
         this.messages.push({
             role: 'user',
-            content: message
+            content: message || (hasAttachments ? '(Anhang gesendet)' : '')
         });
         this.renderMessages();
         
@@ -452,7 +631,8 @@ class ChatApp {
                     session_id: this.currentSession,
                     message: message,
                     model: this.selectedModel,
-                    system_prompt: this.systemPrompt
+                    system_prompt: this.systemPrompt,
+                    attachments: this.attachments
                 })
             });
             
@@ -462,6 +642,14 @@ class ChatApp {
                 content: response.message
             });
             this.renderMessages();
+            // Clear attachments after successful send
+            this.attachments = [];
+            this.updateAttachmentsDisplay();
+            
+            // Update cost display if cost information is available
+            if (response.usage && response.usage.cost_usd !== undefined && response.usage.cost_usd > 0) {
+                this.updateSessionCost(this.currentSession, response.usage.cost_usd);
+            }
             
             // Update session title if it's the first message
             if (this.messages.length === 2) {
@@ -662,10 +850,141 @@ class ChatApp {
         return date.toLocaleDateString('de-DE');
     }
     
+    formatCost(cost) {
+        // Format cost to 4 decimal places, but remove trailing zeros
+        const formatted = parseFloat(cost).toFixed(4);
+        return formatted.replace(/\.?0+$/, '');
+    }
+    
+    formatCostDisplay(cost) {
+        // Format cost for display in session list (similar to time format, without $)
+        const value = parseFloat(cost);
+        if (value < 0.01) return '0.00';
+        if (value < 0.1) return value.toFixed(3);
+        if (value < 1) return value.toFixed(2);
+        return value.toFixed(1);
+    }
+    
+    async loadUserStats() {
+        try {
+            const response = await this.apiRequest('/api/user/stats/');
+            return response;
+        } catch (error) {
+            console.error('Failed to load user stats:', error);
+            return null;
+        }
+    }
+    
+    async toggleStats() {
+        const statsBtn = document.getElementById('statsBtn');
+        const statsText = document.getElementById('statsButtonText');
+        
+        // Check if we're currently showing stats
+        if (statsBtn.classList.contains('showing-stats')) {
+            // Hide stats
+            statsBtn.classList.remove('showing-stats');
+            statsText.textContent = 'Statistiken';
+        } else {
+            // Load and show stats
+            const stats = await this.loadUserStats();
+            if (stats && stats.total_cost !== undefined) {
+                statsBtn.classList.add('showing-stats');
+                if (stats.total_cost > 0) {
+                    statsText.textContent = `Gesamt: $${this.formatCost(stats.total_cost)}`;
+                } else {
+                    statsText.textContent = 'Keine Kosten';
+                }
+            } else {
+                statsText.textContent = 'Fehler beim Laden';
+                setTimeout(() => {
+                    statsText.textContent = 'Statistiken';
+                }, 2000);
+            }
+        }
+    }
+    
+    updateSessionCost(sessionId, cost) {
+        // Update the cost display for a specific session in the sidebar
+        const session = this.sessions.find(s => s.id === sessionId);
+        if (session) {
+            session.total_cost = (session.total_cost || 0) + cost;
+            this.renderSessions();
+        }
+        // Don't update stats automatically anymore
+    }
+    
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+    
+    async handleFileUpload(files, type) {
+        for (let file of files) {
+            if (type === 'image' && file.type.startsWith('image/')) {
+                const base64 = await this.fileToBase64(file);
+                this.attachments.push({
+                    type: 'image',
+                    data: base64,
+                    name: file.name,
+                    size: file.size
+                });
+            } else if (type === 'audio' && file.type.startsWith('audio/')) {
+                const base64 = await this.fileToBase64(file);
+                this.attachments.push({
+                    type: 'audio',
+                    data: base64,
+                    name: file.name,
+                    size: file.size
+                });
+            }
+        }
+        this.updateAttachmentsDisplay();
+        // Re-evaluate send button enabled state
+        this.handleInputChange({ target: this.elements.messageInput });
+    }
+    
+    fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+    
+    updateAttachmentsDisplay() {
+        const preview = document.getElementById('attachmentsPreview');
+        const countElement = document.getElementById('attachmentCount');
+        
+        if (this.attachments.length > 0) {
+            preview.style.display = 'flex';
+            countElement.style.display = 'inline';
+            document.querySelector('.attachment-count').textContent = this.attachments.length;
+            
+            preview.innerHTML = this.attachments.map((att, index) => `
+                <div class="attachment-item">
+                    ${att.type === 'image' ? 
+                        `<img src="${att.data}" alt="${att.name}" class="attachment-thumb">` :
+                        `<div class="attachment-icon">🎵</div>`
+                    }
+                    <span class="attachment-name">${att.name}</span>
+                    <button class="attachment-remove" data-index="${index}">×</button>
+                </div>
+            `).join('');
+            
+            // Add remove handlers
+            preview.querySelectorAll('.attachment-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    this.attachments.splice(index, 1);
+                    this.updateAttachmentsDisplay();
+                });
+            });
+        } else {
+            preview.style.display = 'none';
+            countElement.style.display = 'none';
+        }
     }
     
     async apiRequest(endpoint, options = {}) {

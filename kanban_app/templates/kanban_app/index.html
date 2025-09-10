@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minimalist Kanban Board</title>
     {% load static %}
-    <link rel="stylesheet" href="{% static 'kanban_app/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'kanban_app/css/style.css' %}?v=20250910_1">
 </head>
 <body>
     <div class="app-container">
@@ -126,6 +126,6 @@
         }
         const csrftoken = getCookie('csrftoken');
     </script>
-    <script src="{% static 'kanban_app/js/app.js' %}"></script>
+    <script src="{% static 'kanban_app/js/app.js' %}?v=20250910_1"></script>
 </body>
 </html>

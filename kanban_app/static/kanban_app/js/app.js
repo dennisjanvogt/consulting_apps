@@ -60,7 +60,7 @@ class KanbanApp {
 
     async loadTasks() {
         try {
-            const response = await fetch(`/api/tasks/board/${this.currentBoard}/`);
+            const response = await fetch(`/kanban/api/tasks/board/${this.currentBoard}/`);
             const data = await response.json();
             this.tasks = data.tasks;
             this.renderTasks();
@@ -198,7 +198,7 @@ class KanbanApp {
 
     async moveTask(taskId, newStatus) {
         try {
-            const response = await fetch(`/api/tasks/${taskId}/move/`, {
+            const response = await fetch(`/kanban/api/tasks/${taskId}/move/`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -266,7 +266,7 @@ class KanbanApp {
             let response;
             if (this.currentTask) {
                 // Update existing task
-                response = await fetch(`/api/tasks/${this.currentTask.id}/update/`, {
+                response = await fetch(`/kanban/api/tasks/${this.currentTask.id}/update/`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -276,7 +276,7 @@ class KanbanApp {
                 });
             } else {
                 // Create new task
-                response = await fetch('/api/tasks/create/', {
+                response = await fetch('/kanban/api/tasks/create/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -308,7 +308,7 @@ class KanbanApp {
         if (!this.currentTask) return;
         
         try {
-            const response = await fetch(`/api/tasks/${this.currentTask.id}/delete/`, {
+            const response = await fetch(`/kanban/api/tasks/${this.currentTask.id}/delete/`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRFToken': csrftoken
