@@ -100,8 +100,8 @@ body {
     transform: translateY(-2px);
 }
 
-.add-task-btn {
-    background: var(--accent-color);
+.add-task-btn,
+.ai-assistant-btn {
     border: none;
     color: var(--text-primary);
     width: 40px;
@@ -112,11 +112,53 @@ body {
     justify-content: center;
     cursor: pointer;
     transition: all var(--transition);
+    margin-left: 0.5rem;
+}
+
+.add-task-btn {
+    background: var(--accent-color);
 }
 
 .add-task-btn:hover {
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(30, 58, 95, 0.5);
+}
+
+.ai-assistant-btn {
+    background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-assistant-btn::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #667EEA, #764BA2, #F093FB, #667EEA);
+    background-size: 400%;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border-radius: 50%;
+    animation: shimmer 3s ease infinite;
+    z-index: -1;
+}
+
+.ai-assistant-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+}
+
+.ai-assistant-btn:hover::before {
+    opacity: 1;
+}
+
+@keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 /* Kanban Board */
@@ -271,6 +313,216 @@ body {
 
 .modal-small {
     max-width: 350px;
+}
+
+.modal-large {
+    max-width: 850px;
+    max-height: 95vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* AI Model Selection Cards */
+.model-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.model-card {
+    background: var(--primary-bg);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+}
+
+.model-card:hover {
+    border-color: #667EEA;
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.model-card.selected {
+    border-color: #764BA2;
+    background: rgba(118, 75, 162, 0.15);
+    box-shadow: 0 0 20px rgba(118, 75, 162, 0.4);
+}
+
+.model-card.recommended::before {
+    content: '✨ Recommended';
+    position: absolute;
+    top: -8px;
+    right: 10px;
+    background: linear-gradient(135deg, #667EEA, #764BA2);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.model-card.budget::before {
+    content: '💰 Budget';
+    position: absolute;
+    top: -8px;
+    right: 10px;
+    background: #0F4C2A;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.model-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.model-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.model-provider {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.model-description {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+}
+
+.model-specs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.model-spec {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+
+.model-pricing {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.75rem;
+}
+
+.price-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.price-label {
+    color: var(--text-secondary);
+    font-size: 0.65rem;
+    margin-bottom: 2px;
+}
+
+.price-value {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.price-unit {
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    font-weight: normal;
+}
+
+/* Quality indicators */
+.quality-indicator {
+    display: inline-flex;
+    gap: 2px;
+    align-items: center;
+}
+
+.quality-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.quality-dot.filled {
+    background: #667EEA;
+}
+
+/* Speed indicators */
+.speed-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.speed-bar {
+    width: 3px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 1px;
+}
+
+.speed-indicator.fast .speed-bar {
+    background: #0F4C2A;
+}
+
+.speed-indicator.medium .speed-bar:nth-child(-n+2) {
+    background: #4C2A0F;
+}
+
+.speed-indicator.slow .speed-bar:first-child {
+    background: #4C0F0F;
+}
+
+/* AI Warning */
+.ai-warning {
+    background: rgba(255, 165, 0, 0.1);
+    border: 1px solid rgba(255, 165, 0, 0.3);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    margin: 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #FFA500;
+    font-size: 0.85rem;
+}
+
+.ai-warning a {
+    color: #FFD700;
+    text-decoration: underline;
 }
 
 @keyframes modalSlideIn {

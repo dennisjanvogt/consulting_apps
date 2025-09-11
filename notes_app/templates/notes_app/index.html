@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes & Docs</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'notes_app/css/style.css' %}?v={% now 'U' %}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="/" class="home-btn" title="Back to Hub">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </a>
+                <div class="logo">NOTES & DOCS</div>
+            </div>
+            
+            <div class="header-center">
+                <div class="search-container">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search notes...">
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="btn-icon" id="toggleFavorites" title="Favorites">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="toggleView" title="Toggle View">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                </button>
+                <button class="btn-ai" id="aiAgentBtn" title="AI Document Generator">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                    AI Agent
+                </button>
+                <button class="btn-primary" id="newNoteBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    New Note
+                </button>
+            </div>
+        </header>
+        
+        <div class="main-container">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h3>Folders</h3>
+                    <button class="btn-icon-small" id="newFolderBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="folder-tree" id="folderTree">
+                    <!-- Folders will be loaded here -->
+                </div>
+                
+                <div class="sidebar-footer">
+                    <div class="tags-section">
+                        <h4>Tags</h4>
+                        <div class="tags-list" id="tagsList">
+                            <!-- Tags will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Notes List -->
+            <div class="notes-list-container" id="notesListContainer">
+                <div class="notes-list-header">
+                    <h3>Notes</h3>
+                    <div class="sort-options">
+                        <select id="sortSelect" class="sort-select">
+                            <option value="updated">Last Modified</option>
+                            <option value="created">Created</option>
+                            <option value="title">Title</option>
+                            <option value="favorites">Favorites First</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="notes-list" id="notesList">
+                    <!-- Notes will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Editor -->
+            <div class="editor-container" id="editorContainer">
+                <div class="editor-header">
+                    <input type="text" id="noteTitle" class="note-title-input" placeholder="Untitled Note">
+                    <div class="editor-actions">
+                        <button class="btn-icon" id="togglePreview" title="Toggle Preview">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                        <button class="btn-icon" id="toggleFavorite" title="Add to Favorites">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                            </svg>
+                        </button>
+                        <button class="btn-icon" id="exportBtn" title="Export">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </button>
+                        <button class="btn-icon" id="deleteNoteBtn" title="Delete">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                        <button class="btn-icon" id="saveBtn" title="Save">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="editor-toolbar">
+                    <button class="toolbar-btn" data-action="bold" title="Bold">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                            <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                        </svg>
+                    </button>
+                    <button class="toolbar-btn" data-action="italic" title="Italic">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="19" y1="4" x2="10" y2="4"></line>
+                            <line x1="14" y1="20" x2="5" y2="20"></line>
+                            <line x1="15" y1="4" x2="9" y2="20"></line>
+                        </svg>
+                    </button>
+                    <div class="toolbar-separator"></div>
+                    <button class="toolbar-btn" data-action="h1" title="Heading 1">H1</button>
+                    <button class="toolbar-btn" data-action="h2" title="Heading 2">H2</button>
+                    <button class="toolbar-btn" data-action="h3" title="Heading 3">H3</button>
+                    <div class="toolbar-separator"></div>
+                    <button class="toolbar-btn" data-action="ul" title="Bullet List">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                    </button>
+                    <button class="toolbar-btn" data-action="ol" title="Numbered List">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="10" y1="6" x2="21" y2="6"></line>
+                            <line x1="10" y1="12" x2="21" y2="12"></line>
+                            <line x1="10" y1="18" x2="21" y2="18"></line>
+                            <path d="M4 6h1v4"></path>
+                            <path d="M4 10h2"></path>
+                            <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"></path>
+                        </svg>
+                    </button>
+                    <button class="toolbar-btn" data-action="checklist" title="Checklist">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 11 12 14 22 4"></polyline>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                    </button>
+                    <div class="toolbar-separator"></div>
+                    <button class="toolbar-btn" data-action="quote" title="Quote">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
+                            <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
+                        </svg>
+                    </button>
+                    <button class="toolbar-btn" data-action="code" title="Code">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg>
+                    </button>
+                    <button class="toolbar-btn" data-action="link" title="Link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                        </svg>
+                    </button>
+                    <button class="toolbar-btn" data-action="table" title="Table">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="editor-body">
+                    <div class="editor-panel" id="editorPanel">
+                        <textarea id="editor" class="editor" placeholder="Start writing..."></textarea>
+                    </div>
+                    <div class="preview-panel hidden" id="previewPanel">
+                        <div class="preview-content" id="previewContent"></div>
+                    </div>
+                </div>
+                
+                <div class="editor-footer">
+                    <div class="word-count">
+                        <span id="wordCount">0 words</span>
+                    </div>
+                    <div class="save-status" id="saveStatus">
+                        All changes saved
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div class="modal" id="newFolderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>New Folder</h2>
+                <button class="modal-close" onclick="closeModal('newFolderModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Folder Name</label>
+                    <input type="text" id="folderName" class="form-input" placeholder="Enter folder name">
+                </div>
+                <div class="form-group">
+                    <label>Parent Folder</label>
+                    <select id="parentFolder" class="form-select">
+                        <option value="">Root</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <div class="color-picker">
+                        <button class="color-option" data-color="#3F1E5F" style="background: #3F1E5F"></button>
+                        <button class="color-option" data-color="#1E3A5F" style="background: #1E3A5F"></button>
+                        <button class="color-option" data-color="#1F4C3A" style="background: #1F4C3A"></button>
+                        <button class="color-option" data-color="#5F1E3A" style="background: #5F1E3A"></button>
+                        <button class="color-option" data-color="#4C2A0F" style="background: #4C2A0F"></button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('newFolderModal')">Cancel</button>
+                <button class="btn-primary" onclick="createFolder()">Create</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Export Note</h2>
+                <button class="modal-close" onclick="closeModal('exportModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="export-options">
+                    <button class="export-option" data-format="markdown">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <span>Markdown</span>
+                    </button>
+                    <button class="export-option" data-format="html">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg>
+                        <span>HTML</span>
+                    </button>
+                    <button class="export-option" data-format="pdf">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        <span>PDF</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI Agent Modal -->
+    <div class="modal" id="aiAgentModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>🤖 AI Document Generator</h2>
+                <button class="modal-close" onclick="closeModal('aiAgentModal')">×</button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem; overflow-y: auto;">
+                <div class="form-group">
+                    <label>Document Type</label>
+                    <select id="aiTemplateSelect" class="form-select">
+                        <option value="">Loading templates...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Topic/Title</label>
+                    <input type="text" id="aiTopic" class="form-input" placeholder="e.g., REST API Authentication">
+                </div>
+                
+                <div class="form-group">
+                    <label>Description/Requirements</label>
+                    <textarea id="aiDescription" class="form-textarea" rows="4" 
+                              placeholder="Describe what you want the document to cover..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Target Folder</label>
+                    <select id="aiFolderSelect" class="form-select">
+                        <option value="">Root (No Folder)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Select AI Model</label>
+                    <div class="model-selection-grid" id="modelSelectionGrid">
+                        <!-- Model cards will be inserted here by JavaScript -->
+                    </div>
+                    <input type="hidden" id="aiModelSelect" value="openai/gpt-4-turbo-preview">
+                </div>
+                
+                <div class="ai-warning" id="aiWarning" style="display: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span id="aiWarningText">No API key found. Please configure your OpenRouter API key.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('aiAgentModal')">Cancel</button>
+                <button class="btn-ai-generate" id="aiGenerateBtn" onclick="generateAIDocument()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13"></path>
+                        <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+                    </svg>
+                    Generate Document
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI Enhance Modal -->
+    <div class="modal" id="aiEnhanceModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>✨ Enhance Document with AI</h2>
+                <button class="modal-close" onclick="closeModal('aiEnhanceModal')">×</button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem; overflow-y: auto;">
+                <div class="form-group">
+                    <label>Enhancement Instructions</label>
+                    <textarea id="aiEnhanceInstruction" class="form-textarea" rows="4" 
+                              placeholder="e.g., Add more examples, improve formatting, fix grammar..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Select AI Model</label>
+                    <div class="model-selection-grid" id="enhanceModelSelectionGrid">
+                        <!-- Model cards will be inserted here by JavaScript -->
+                    </div>
+                    <input type="hidden" id="aiEnhanceModelSelect" value="openai/gpt-4-turbo-preview">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('aiEnhanceModal')">Cancel</button>
+                <button class="btn-ai-generate" onclick="enhanceWithAI()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                    Enhance Document
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    {% csrf_token %}
+    <script src="{% static 'notes_app/js/app.js' %}?v={% now 'U' %}"></script>
+    <script src="{% static 'notes_app/js/ai-agent.js' %}?v={% now 'U' %}"></script>
+</body>
+</html>

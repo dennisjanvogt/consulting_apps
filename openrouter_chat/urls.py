@@ -15,4 +15,5 @@ urlpatterns = [
     path('api/chat/send/', views.send_message, name='send_message'),
     path('api/settings/api-key/', views.save_api_key, name='save_api_key'),
     path('api/models/', views.get_models, name='get_models'),
+    path('api/user/stats/', views.get_user_stats, name='get_user_stats'),
 ]

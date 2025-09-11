@@ -25,9 +25,11 @@ urlpatterns = [
     path('', views.landing_page, name='landing'),
     path('auth/', include('authentication.urls')),
     path('kanban/', include('kanban_app.urls')),
+    path('notes/', include('notes_app.urls')),
     path('openrouter/', include('openrouter_chat.urls')),
     path('storage/', include('storage_app.urls')),
     path('time-tracker/', include('time_tracker.urls')),
+    path('workflow/', include('workflow_app.urls')),
 ]
 
 # Serve media files in development

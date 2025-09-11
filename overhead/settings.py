@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'authentication',
     'kanban_app',
+    'workflow_app',
+    'notes_app',
     'openrouter_chat',
     'storage_app',
     'time_tracker',
