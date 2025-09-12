@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Authentication - Workspace Hub{% endblock %}</title>
     {% load static %}
-    <link rel="stylesheet" href="{% static 'authentication/css/auth.css' %}">
+    <link rel="stylesheet" href="{% static 'authentication/css/auth.css' %}?v=20250912_4">
 </head>
 <body>
-    <div class="auth-container">
+    <div class="auth-container {% block container_class %}{% endblock %}">
         {% block content %}{% endblock %}
     </div>
 </body>

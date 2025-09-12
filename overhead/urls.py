@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.landing_page, name='landing'),
     path('auth/', include('authentication.urls')),
+    path('accounts/', include('allauth.urls')),
     path('kanban/', include('kanban_app.urls')),
     path('notes/', include('notes_app.urls')),
     path('openrouter/', include('openrouter_chat.urls')),
