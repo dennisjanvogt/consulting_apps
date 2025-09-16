@@ -1,8 +1,16 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.forms import UserCreationForm
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import Profile
+import json
+from django.http import JsonResponse
+from PIL import Image
+import io
+import base64
+from django.core.files.base import ContentFile
 
 def login_view(request):
     """Central login view for all apps"""
@@ -61,3 +69,73 @@ def register_view(request):
             return redirect('/')
     
     return render(request, 'authentication/register.html')
+
+
+@login_required
+def profile_view(request):
+    """View and edit user profile"""
+    profile, created = Profile.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        # Update user information
+        user = request.user
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', '')
+
+        # Check if username is being changed and if it's available
+        new_username = request.POST.get('username', '')
+        if new_username and new_username != user.username:
+            if User.objects.filter(username=new_username).exists():
+                messages.error(request, 'Username already exists')
+                return redirect('profile')
+            user.username = new_username
+
+        user.save()
+
+        # Update profile information
+        profile.bio = request.POST.get('bio', '')
+        profile.phone = request.POST.get('phone', '')
+        profile.location = request.POST.get('location', '')
+
+        # Handle profile picture
+        if 'profile_picture_data' in request.POST:
+            picture_data = request.POST.get('profile_picture_data')
+            if picture_data and picture_data.startswith('data:image'):
+                # Extract the base64 data
+                format, imgstr = picture_data.split(';base64,')
+                ext = format.split('/')[-1]
+
+                # Decode and save
+                data = ContentFile(base64.b64decode(imgstr), name=f'{user.username}_profile.{ext}')
+                profile.profile_picture = data
+
+        profile.save()
+        messages.success(request, 'Profile updated successfully!')
+        return redirect('profile')
+
+    context = {
+        'user': request.user,
+        'profile': profile,
+    }
+    return render(request, 'authentication/profile.html', context)
+
+
+@login_required
+def password_change_view(request):
+    """Change password view"""
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important!
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('profile')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, error)
+    else:
+        form = PasswordChangeForm(request.user)
+
+    return render(request, 'authentication/password_change.html', {'form': form})

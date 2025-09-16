@@ -358,6 +358,7 @@
     <div class="auth-status">
         {% if is_authenticated %}
             <span class="username">Welcome, {{ user.username }}</span>
+            <a href="/auth/profile/">Profile</a>
             <a href="/auth/logout/">Logout</a>
         {% else %}
             <a href="/auth/login/">Login</a>
