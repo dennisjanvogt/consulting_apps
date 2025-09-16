@@ -7,7 +7,9 @@ class StorageApp {
         this.viewMode = 'grid';
         this.contextTarget = null;
         this.uploadQueue = [];
-        
+        this.selectedManageFolder = null;
+        this.draggedFolder = null;
+
         this.init();
     }
     
@@ -66,7 +68,12 @@ class StorageApp {
         document.getElementById('viewToggle').addEventListener('click', () => {
             this.toggleView();
         });
-        
+
+        // Folder management button
+        document.getElementById('folderManageBtn').addEventListener('click', () => {
+            this.showFolderManagement();
+        });
+
         // Modal close buttons
         document.querySelectorAll('.modal-close, [data-modal-close]').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -171,28 +178,14 @@ class StorageApp {
             
             // Use real disk statistics
             const diskUsedPercentage = (data.disk_used / data.disk_total) * 100;
-            
+
             // Update storage bar based on actual disk usage
             document.getElementById('storageUsed').style.width = `${diskUsedPercentage}%`;
-            
-            // Update storage text with real values
-            document.getElementById('storageUsedText').textContent = `${data.formatted_disk_used} von`;
-            document.getElementById('storageTotalText').textContent = `${data.formatted_disk_total} (${diskUsedPercentage.toFixed(1)}% belegt)`;
-            
-            // Also show free space
-            const freeInfo = document.createElement('div');
-            freeInfo.style.fontSize = '0.75rem';
-            freeInfo.style.color = 'var(--text-secondary)';
-            freeInfo.style.marginTop = '0.25rem';
-            freeInfo.textContent = `${data.formatted_disk_free} frei`;
-            
-            const storageBarInfo = document.querySelector('.storage-bar-info');
-            const existingFreeInfo = storageBarInfo.querySelector('div');
-            if (existingFreeInfo) {
-                existingFreeInfo.remove();
-            }
-            storageBarInfo.appendChild(freeInfo);
-            
+
+            // Update storage text with real values - two lines
+            document.getElementById('storageUsedText').textContent = data.formatted_disk_used;
+            document.getElementById('storageTotalText').textContent = `von ${data.formatted_disk_total} (${diskUsedPercentage.toFixed(1)}% belegt)`;
+
             // Change color based on actual disk usage
             const storageBar = document.getElementById('storageUsed');
             if (diskUsedPercentage > 90) {
@@ -765,7 +758,7 @@ class StorageApp {
                 },
                 body: JSON.stringify({ folder_id: targetFolderId })
             });
-            
+
             if (response.ok) {
                 // Reload files in current view
                 this.loadFiles(this.currentFolder);
@@ -775,6 +768,450 @@ class StorageApp {
             }
         } catch (error) {
             console.error('Error moving file:', error);
+        }
+    }
+
+    // Folder Management Methods
+    async showFolderManagement() {
+        const modal = document.getElementById('folderManageModal');
+        modal.classList.add('active');
+
+        // Load folders for management
+        await this.loadFoldersForManagement();
+
+        // Setup event listeners for management modal
+        this.setupManagementEventListeners();
+    }
+
+    async loadFoldersForManagement() {
+        try {
+            const response = await fetch('/storage/api/folders/', {
+                headers: {
+                    'X-CSRFToken': csrftoken
+                }
+            });
+
+            const data = await response.json();
+            this.renderFolderTreeManagement(data.folders);
+
+            // Update folder count
+            document.getElementById('folderCount').textContent = `${data.folders.length} Ordner`;
+        } catch (error) {
+            console.error('Error loading folders for management:', error);
+        }
+    }
+
+    renderFolderTreeManagement(folders) {
+        const tree = document.getElementById('folderTreeManage');
+        tree.innerHTML = '';
+
+        // Create root node
+        const rootNode = this.createManagementTreeNode({
+            id: null,
+            name: 'Alle Dateien',
+            file_count: 0,
+            isRoot: true
+        });
+        tree.appendChild(rootNode);
+
+        // Build tree structure
+        const folderMap = new Map();
+        folders.forEach(folder => {
+            folderMap.set(folder.id, folder);
+            folder.children = [];
+        });
+
+        // Organize folders by parent
+        const rootFolders = [];
+        folders.forEach(folder => {
+            if (folder.parent_id) {
+                const parent = folderMap.get(folder.parent_id);
+                if (parent) {
+                    parent.children.push(folder);
+                }
+            } else {
+                rootFolders.push(folder);
+            }
+        });
+
+        // Render tree recursively
+        rootFolders.forEach(folder => {
+            const node = this.createManagementTreeNode(folder);
+            tree.appendChild(node);
+            this.renderChildrenNodes(node, folder.children);
+        });
+    }
+
+    createManagementTreeNode(folder) {
+        const node = document.createElement('div');
+        node.className = 'tree-node';
+        node.dataset.folderId = folder.id || '';
+
+        const content = document.createElement('div');
+        content.className = 'tree-node-content';
+        content.draggable = !folder.isRoot;
+
+        // Toggle for expandable folders
+        const hasChildren = folder.children && folder.children.length > 0;
+        const toggle = document.createElement('span');
+        toggle.className = 'tree-node-toggle';
+        if (hasChildren) {
+            toggle.innerHTML = '▶';
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleFolderExpand(node);
+            });
+        }
+        content.appendChild(toggle);
+
+        // Folder icon
+        const icon = document.createElement('svg');
+        icon.className = 'tree-node-icon';
+        icon.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+        `;
+        content.appendChild(icon);
+
+        // Folder name
+        const name = document.createElement('span');
+        name.className = 'tree-node-name';
+        name.textContent = folder.name;
+        content.appendChild(name);
+
+        // File count
+        if (folder.file_count > 0) {
+            const count = document.createElement('span');
+            count.className = 'tree-node-count';
+            count.textContent = folder.file_count;
+            content.appendChild(count);
+        }
+
+        // Click handler
+        content.addEventListener('click', () => {
+            this.selectManagementFolder(folder, content);
+        });
+
+        // Drag and drop handlers
+        if (!folder.isRoot) {
+            content.addEventListener('dragstart', (e) => {
+                this.draggedFolder = folder;
+                node.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('folderId', folder.id);
+            });
+
+            content.addEventListener('dragend', () => {
+                node.classList.remove('dragging');
+                this.draggedFolder = null;
+            });
+        }
+
+        content.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (this.draggedFolder && this.draggedFolder.id !== folder.id) {
+                content.classList.add('drag-over');
+            }
+        });
+
+        content.addEventListener('dragleave', () => {
+            content.classList.remove('drag-over');
+        });
+
+        content.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            content.classList.remove('drag-over');
+
+            if (this.draggedFolder && this.draggedFolder.id !== folder.id) {
+                await this.moveFolderTo(this.draggedFolder.id, folder.id || null);
+            }
+        });
+
+        node.appendChild(content);
+
+        // Children container
+        if (hasChildren) {
+            const childrenContainer = document.createElement('div');
+            childrenContainer.className = 'tree-node-children';
+            node.appendChild(childrenContainer);
+        }
+
+        return node;
+    }
+
+    renderChildrenNodes(parentNode, children) {
+        if (!children || children.length === 0) return;
+
+        const childrenContainer = parentNode.querySelector('.tree-node-children');
+        if (!childrenContainer) return;
+
+        children.forEach(child => {
+            const node = this.createManagementTreeNode(child);
+            childrenContainer.appendChild(node);
+            if (child.children && child.children.length > 0) {
+                this.renderChildrenNodes(node, child.children);
+            }
+        });
+    }
+
+    toggleFolderExpand(node) {
+        const toggle = node.querySelector('.tree-node-toggle');
+        const children = node.querySelector('.tree-node-children');
+
+        if (toggle && children) {
+            toggle.classList.toggle('expanded');
+            children.classList.toggle('expanded');
+        }
+    }
+
+    selectManagementFolder(folder, contentElement) {
+        // Update UI selection
+        document.querySelectorAll('.tree-node-content').forEach(el => {
+            el.classList.remove('selected');
+        });
+        contentElement.classList.add('selected');
+
+        this.selectedManageFolder = folder;
+
+        // Update selected folder info
+        document.getElementById('selectedFolderInfo').textContent = folder.name;
+
+        // Show folder details
+        this.showFolderDetails(folder);
+    }
+
+    async showFolderDetails(folder) {
+        const emptyView = document.querySelector('.folder-details-empty');
+        const detailsView = document.querySelector('.folder-details-content');
+
+        if (folder.isRoot) {
+            emptyView.style.display = 'flex';
+            detailsView.style.display = 'none';
+            return;
+        }
+
+        emptyView.style.display = 'none';
+        detailsView.style.display = 'block';
+
+        // Update details
+        document.getElementById('detailName').textContent = folder.name;
+        document.getElementById('detailPath').textContent = folder.path || `/${folder.name}`;
+        document.getElementById('detailFiles').textContent = folder.file_count || '0';
+
+        // Format size
+        const size = folder.size || 0;
+        let formattedSize = '0 B';
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let unitIndex = 0;
+        let displaySize = size;
+
+        while (displaySize >= 1024 && unitIndex < units.length - 1) {
+            displaySize /= 1024;
+            unitIndex++;
+        }
+
+        formattedSize = `${displaySize.toFixed(1)} ${units[unitIndex]}`;
+        document.getElementById('detailSize').textContent = formattedSize;
+
+        // Format date
+        const created = new Date(folder.created_at);
+        document.getElementById('detailCreated').textContent = created.toLocaleString('de-DE');
+    }
+
+    setupManagementEventListeners() {
+        // Add folder button
+        const addBtn = document.getElementById('addFolderBtn');
+        if (addBtn && !addBtn.hasListener) {
+            addBtn.hasListener = true;
+            addBtn.addEventListener('click', () => {
+                this.showAddFolderDialog();
+            });
+        }
+
+        // Rename folder button
+        const renameBtn = document.getElementById('renameFolderBtn');
+        if (renameBtn && !renameBtn.hasListener) {
+            renameBtn.hasListener = true;
+            renameBtn.addEventListener('click', () => {
+                this.renameFolderDialog();
+            });
+        }
+
+        // Move folder button
+        const moveBtn = document.getElementById('moveFolderBtn');
+        if (moveBtn && !moveBtn.hasListener) {
+            moveBtn.hasListener = true;
+            moveBtn.addEventListener('click', () => {
+                this.moveFolderDialog();
+            });
+        }
+
+        // Delete folder button
+        const deleteBtn = document.getElementById('deleteFolderBtn');
+        if (deleteBtn && !deleteBtn.hasListener) {
+            deleteBtn.hasListener = true;
+            deleteBtn.addEventListener('click', () => {
+                this.deleteFolderDialog();
+            });
+        }
+    }
+
+    showAddFolderDialog() {
+        const name = prompt('Neuer Ordnername:', '');
+        if (!name) return;
+
+        const parentId = this.selectedManageFolder && !this.selectedManageFolder.isRoot
+            ? this.selectedManageFolder.id
+            : null;
+
+        this.createNewFolder(name, parentId);
+    }
+
+    async createNewFolder(name, parentId) {
+        try {
+            const response = await fetch('/storage/api/folders/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    name: name,
+                    parent_id: parentId
+                })
+            });
+
+            if (response.ok) {
+                await this.loadFoldersForManagement();
+                this.loadFolders();
+                this.loadStats();
+            } else {
+                const error = await response.json();
+                alert(error.error || 'Fehler beim Erstellen des Ordners');
+            }
+        } catch (error) {
+            console.error('Error creating folder:', error);
+            alert('Fehler beim Erstellen des Ordners');
+        }
+    }
+
+    renameFolderDialog() {
+        if (!this.selectedManageFolder || this.selectedManageFolder.isRoot) {
+            alert('Bitte wählen Sie einen Ordner zum Umbenennen aus');
+            return;
+        }
+
+        const newName = prompt('Neuer Name:', this.selectedManageFolder.name);
+        if (!newName || newName === this.selectedManageFolder.name) return;
+
+        this.renameFolder(this.selectedManageFolder.id, newName);
+    }
+
+    async renameFolder(folderId, newName) {
+        try {
+            const response = await fetch(`/storage/api/folders/${folderId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ name: newName })
+            });
+
+            if (response.ok) {
+                await this.loadFoldersForManagement();
+                this.loadFolders();
+
+                // Update selected folder details
+                const updatedFolder = await response.json();
+                updatedFolder.file_count = this.selectedManageFolder.file_count;
+                updatedFolder.size = this.selectedManageFolder.size;
+                updatedFolder.created_at = this.selectedManageFolder.created_at;
+                this.selectedManageFolder = updatedFolder;
+                this.showFolderDetails(updatedFolder);
+            }
+        } catch (error) {
+            console.error('Error renaming folder:', error);
+            alert('Fehler beim Umbenennen des Ordners');
+        }
+    }
+
+    moveFolderDialog() {
+        if (!this.selectedManageFolder || this.selectedManageFolder.isRoot) {
+            alert('Bitte wählen Sie einen Ordner zum Verschieben aus');
+            return;
+        }
+
+        alert('Verwenden Sie Drag & Drop, um Ordner zu verschieben');
+    }
+
+    async moveFolderTo(folderId, targetParentId) {
+        try {
+            const response = await fetch(`/storage/api/folders/${folderId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ parent_id: targetParentId })
+            });
+
+            if (response.ok) {
+                await this.loadFoldersForManagement();
+                this.loadFolders();
+            } else {
+                const error = await response.json();
+                alert(error.error || 'Fehler beim Verschieben des Ordners');
+            }
+        } catch (error) {
+            console.error('Error moving folder:', error);
+            alert('Fehler beim Verschieben des Ordners');
+        }
+    }
+
+    deleteFolderDialog() {
+        if (!this.selectedManageFolder || this.selectedManageFolder.isRoot) {
+            alert('Bitte wählen Sie einen Ordner zum Löschen aus');
+            return;
+        }
+
+        const confirm = window.confirm(
+            `Möchten Sie den Ordner "${this.selectedManageFolder.name}" und alle enthaltenen Dateien wirklich löschen?`
+        );
+
+        if (confirm) {
+            this.deleteFolder(this.selectedManageFolder.id);
+        }
+    }
+
+    async deleteFolder(folderId) {
+        try {
+            const response = await fetch(`/storage/api/folders/${folderId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                }
+            });
+
+            if (response.ok) {
+                // Clear selection
+                this.selectedManageFolder = null;
+                document.getElementById('selectedFolderInfo').textContent = 'Kein Ordner ausgewählt';
+
+                // Show empty view
+                document.querySelector('.folder-details-empty').style.display = 'flex';
+                document.querySelector('.folder-details-content').style.display = 'none';
+
+                // Reload folders
+                await this.loadFoldersForManagement();
+                this.loadFolders();
+                this.loadFiles(this.currentFolder);
+                this.loadStats();
+            }
+        } catch (error) {
+            console.error('Error deleting folder:', error);
+            alert('Fehler beim Löschen des Ordners');
         }
     }
 }
