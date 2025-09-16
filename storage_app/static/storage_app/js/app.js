@@ -178,28 +178,14 @@ class StorageApp {
             
             // Use real disk statistics
             const diskUsedPercentage = (data.disk_used / data.disk_total) * 100;
-            
+
             // Update storage bar based on actual disk usage
             document.getElementById('storageUsed').style.width = `${diskUsedPercentage}%`;
-            
-            // Update storage text with real values
-            document.getElementById('storageUsedText').textContent = `${data.formatted_disk_used} von`;
-            document.getElementById('storageTotalText').textContent = `${data.formatted_disk_total} (${diskUsedPercentage.toFixed(1)}% belegt)`;
-            
-            // Also show free space
-            const freeInfo = document.createElement('div');
-            freeInfo.style.fontSize = '0.75rem';
-            freeInfo.style.color = 'var(--text-secondary)';
-            freeInfo.style.marginTop = '0.25rem';
-            freeInfo.textContent = `${data.formatted_disk_free} frei`;
-            
-            const storageBarInfo = document.querySelector('.storage-bar-info');
-            const existingFreeInfo = storageBarInfo.querySelector('div');
-            if (existingFreeInfo) {
-                existingFreeInfo.remove();
-            }
-            storageBarInfo.appendChild(freeInfo);
-            
+
+            // Update storage text with real values - two lines
+            document.getElementById('storageUsedText').textContent = data.formatted_disk_used;
+            document.getElementById('storageTotalText').textContent = `von ${data.formatted_disk_total} (${diskUsedPercentage.toFixed(1)}% belegt)`;
+
             // Change color based on actual disk usage
             const storageBar = document.getElementById('storageUsed');
             if (diskUsedPercentage > 90) {
