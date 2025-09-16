@@ -18,35 +18,28 @@
         --danger: #EF4444;
     }
 
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
     body {
         background: var(--bg-primary);
         color: var(--text-primary);
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .profile-container {
-        max-width: 900px;
-        width: 100%;
         padding: 2rem;
     }
 
-    .profile-header {
-        text-align: center;
-        margin-bottom: 2rem;
-        position: relative;
-    }
-
+    /* Back Button - Fixed in top left corner */
     .back-button {
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
+        position: fixed;
+        left: 1rem;
+        top: 1rem;
+        z-index: 100;
         padding: 0.5rem 1rem;
-        background: transparent;
+        background: var(--bg-card);
         border: 1px solid var(--border);
         border-radius: 8px;
         color: var(--text-primary);
@@ -64,6 +57,17 @@
         box-shadow: 0 4px 12px var(--glow);
     }
 
+    .profile-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding-top: 4rem; /* Space for fixed back button */
+    }
+
+    .profile-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
     .profile-title {
         font-size: 2rem;
         font-weight: 300;
@@ -77,25 +81,26 @@
         background: var(--bg-card);
         border: 1px solid var(--border);
         border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
+        padding: 2.5rem;
+        overflow: hidden; /* Prevent content overflow */
     }
 
     .profile-sections {
         display: flex;
-        gap: 2rem;
+        gap: 3rem;
     }
 
     .profile-left {
-        flex: 0 0 250px;
+        flex-shrink: 0;
+        width: 220px;
         text-align: center;
     }
 
     .profile-picture-container {
         position: relative;
-        width: 200px;
-        height: 200px;
-        margin: 0 auto 1rem;
+        width: 180px;
+        height: 180px;
+        margin: 0 auto 1.5rem;
     }
 
     .profile-picture {
@@ -122,10 +127,10 @@
 
     .change-photo-btn {
         position: absolute;
-        bottom: 10px;
-        right: 10px;
-        width: 40px;
-        height: 40px;
+        bottom: 5px;
+        right: 5px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         background: var(--accent);
         border: 2px solid var(--bg-card);
@@ -142,17 +147,18 @@
     }
 
     .change-photo-btn svg {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
         color: white;
     }
 
     .profile-right {
         flex: 1;
+        min-width: 0; /* Prevent overflow */
     }
 
     .form-group {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.75rem;
     }
 
     .form-label {
@@ -165,7 +171,7 @@
 
     .form-input {
         width: 100%;
-        padding: 0.75rem 1rem;
+        padding: 0.875rem 1.25rem;
         background: var(--bg-secondary);
         border: 1px solid var(--border);
         border-radius: 8px;
@@ -187,14 +193,15 @@
 
     .form-textarea {
         width: 100%;
-        padding: 0.75rem 1rem;
+        padding: 0.875rem 1.25rem;
         background: var(--bg-secondary);
         border: 1px solid var(--border);
         border-radius: 8px;
         color: var(--text-primary);
         font-size: 1rem;
+        font-family: inherit;
         resize: vertical;
-        min-height: 100px;
+        min-height: 120px;
         transition: all 0.3s ease;
     }
 
@@ -207,7 +214,7 @@
     .form-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1rem;
+        gap: 1.25rem;
     }
 
     .form-actions {
@@ -253,17 +260,6 @@
         background: var(--bg-secondary);
     }
 
-    .btn-danger {
-        background: transparent;
-        color: var(--danger);
-        border: 1px solid var(--danger);
-    }
-
-    .btn-danger:hover {
-        background: var(--danger);
-        color: white;
-    }
-
     /* Image Cropper Modal */
     .modal {
         display: none;
@@ -272,7 +268,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.85);
         z-index: 1000;
         align-items: center;
         justify-content: center;
@@ -287,7 +283,9 @@
         border-radius: 12px;
         max-width: 600px;
         width: 90%;
+        max-height: 90vh;
         padding: 2rem;
+        overflow-y: auto;
     }
 
     .modal-header {
@@ -344,7 +342,7 @@
 
     /* Messages */
     .messages {
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
     }
 
     .message {
@@ -368,35 +366,79 @@
         color: var(--danger);
     }
 
+    /* Responsive Design */
     @media (max-width: 768px) {
+        body {
+            padding: 1rem;
+        }
+
+        .back-button {
+            position: fixed;
+            left: 0.5rem;
+            top: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        .profile-container {
+            padding-top: 3.5rem;
+        }
+
+        .profile-card {
+            padding: 1.5rem;
+        }
+
         .profile-sections {
             flex-direction: column;
+            gap: 2rem;
         }
 
         .profile-left {
-            flex: none;
+            width: 100%;
         }
 
         .form-row {
             grid-template-columns: 1fr;
         }
 
-        .back-button {
-            position: static;
-            transform: none;
-            margin-bottom: 1rem;
+        .form-actions {
+            flex-direction: column-reverse;
+            gap: 1rem;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .profile-title {
+            font-size: 1.5rem;
+        }
+
+        .profile-picture-container {
+            width: 150px;
+            height: 150px;
+        }
+
+        .form-input,
+        .form-textarea {
+            padding: 0.75rem 1rem;
         }
     }
 </style>
 
+<!-- Back Button positioned in top left corner -->
+<a href="/" class="back-button">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M15 18l-6-6 6-6"/>
+    </svg>
+    Back to Hub
+</a>
+
 <div class="profile-container">
     <div class="profile-header">
-        <a href="/" class="back-button">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M15 18l-6-6 6-6"/>
-            </svg>
-            Back to Hub
-        </a>
         <h1 class="profile-title">USER PROFILE</h1>
     </div>
 
