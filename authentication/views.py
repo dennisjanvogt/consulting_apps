@@ -88,7 +88,7 @@ def profile_view(request):
         if new_username and new_username != user.username:
             if User.objects.filter(username=new_username).exists():
                 messages.error(request, 'Username already exists')
-                return redirect('profile')
+                return redirect('auth:profile')
             user.username = new_username
 
         user.save()
@@ -112,7 +112,7 @@ def profile_view(request):
 
         profile.save()
         messages.success(request, 'Profile updated successfully!')
-        return redirect('profile')
+        return redirect('auth:profile')
 
     context = {
         'user': request.user,
@@ -130,7 +130,7 @@ def password_change_view(request):
             user = form.save()
             update_session_auth_hash(request, user)  # Important!
             messages.success(request, 'Your password was successfully updated!')
-            return redirect('profile')
+            return redirect('auth:profile')
         else:
             for field, errors in form.errors.items():
                 for error in errors:
