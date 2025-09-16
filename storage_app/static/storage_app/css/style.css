@@ -746,9 +746,14 @@ body {
 }
 
 /* Folder Management Modal */
+#folderManageModal .modal-content {
+    width: 90%;
+    max-width: 1200px;
+}
+
 .folder-manage-body {
     padding: 0;
-    height: 600px;
+    height: 700px;
     display: flex;
     flex-direction: column;
 }
@@ -780,7 +785,7 @@ body {
 }
 
 .folder-tree-manage {
-    width: 350px;
+    width: 400px;
     background: var(--primary-bg);
     border-right: 1px solid var(--border-color);
     overflow-y: auto;
@@ -935,19 +940,26 @@ body {
 
 .detail-actions {
     display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    gap: 1rem;
+    flex-wrap: nowrap;
+    margin-top: 1.5rem;
 }
 
 .detail-actions .btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    min-height: 44px;
 }
 
 .detail-actions .btn svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
 }
 
 /* Responsive */
